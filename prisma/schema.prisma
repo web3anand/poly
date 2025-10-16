@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Event {
+  id                String   @id
+  ticker            String?
+  slug              String?
+  title             String
+  subtitle          String?
+  description       String?
+  resolutionSource  String?
+  startDate         DateTime?
+  endDate           DateTime?
+  image             String?
+  icon              String?
+  active            Boolean  @default(true)
+  closed            Boolean  @default(false)
+  archived          Boolean  @default(false)
+  new               Boolean  @default(false)
+  featured          Boolean  @default(false)
+  restricted        Boolean  @default(false)
+  liquidity         Float    @default(0)
+  volume            Float    @default(0)
+  openInterest      Float    @default(0)
+  category          String?
+  subcategory       String?
+  volume24hr        Float    @default(0)
+  volume1wk         Float    @default(0)
+  volume1mo         Float    @default(0)
+  volume1yr         Float    @default(0)
+  commentCount      Int      @default(0)
+  competitive       Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  markets           Market[]
+  tags              EventTag[]
+  eventCreators     EventCreator[]
+
+  @@map("events")
+}
+
+model Market {
+  id                String   @id
+  question          String
+  conditionId       String?
+  slug              String?
+  resolutionSource  String?
+  endDate           DateTime?
+  category          String?
+  ammType           String?
+  liquidity         String?
+  startDate         DateTime?
+  denominationToken String?
+  fee               String?
+  image             String?
+  icon              String?
+  description       String?
+  outcomes          String?
+  outcomePrices     String?
+  volume            String?
+  active            Boolean  @default(true)
+  marketType        String?
+  formatType        String?
+  closed            Boolean  @default(false)
+  new               Boolean  @default(false)
+  featured          Boolean  @default(false)
+  archived          Boolean  @default(false)
+  restricted        Boolean  @default(false)
+  volumeNum         Float    @default(0)
+  liquidityNum      Float    @default(0)
+  lastPrice         Float    @default(0)
+  lastPriceNum      Float    @default(0)
+  price             Float    @default(0)
+  priceNum          Float    @default(0)
+  yesAsk            Float    @default(0)
+  yesBid            Float    @default(0)
+  noAsk             Float    @default(0)
+  noBid             Float    @default(0)
+  timestamp         String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  eventId           String?
+  event             Event?   @relation(fields: [eventId], references: [id])
+
+  @@map("markets")
+}
+
+model Profile {
+  id                    String   @id
+  name                  String?
+  user                  Int?
+  pseudonym             String?
+  displayUsernamePublic Boolean  @default(true)
+  profileImage          String?
+  bio                   String?
+  proxyWallet           String?
+  walletActivated       Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Tag {
+  id         String @id
+  label      String
+  slug       String
+  eventCount Int    @default(0)
+
+  events     EventTag[]
+
+  @@map("tags")
+}
+
+model EventTag {
+  eventId String
+  tagId   String
+
+  event   Event @relation(fields: [eventId], references: [id])
+  tag     Tag   @relation(fields: [tagId], references: [id])
+
+  @@id([eventId, tagId])
+  @@map("event_tags")
+}
+
+model EventCreator {
+  id            String   @id
+  creatorName   String?
+  creatorHandle String?
+  creatorUrl    String?
+  creatorImage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  eventId       String?
+  event         Event?  @relation(fields: [eventId], references: [id])
+
+  @@map("event_creators")
+}
