@@ -1,54 +1,123 @@
-# Polymarket Dashboard - Clean Slate
+# Polymarket Trader Search
 
-This is a clean slate Polymarket dashboard project ready for your new implementation.
+A professional web application to search and analyze Polymarket traders, view their trading statistics, P&L history, and live positions.
 
-## Current State
+## Features
 
-- ✅ Clean React frontend with minimal Dashboard component
-- ✅ Clean Express.js backend with health check endpoint
-- ✅ Clean Prisma database schema (no models defined)
-- ✅ All existing components and services removed
-- ✅ Minimal dependencies
+- 🔍 **Search Traders** - Find Polymarket traders by username
+- 📊 **Detailed Analytics** - View comprehensive trading metrics including:
+  - Win Rate & Total Wins/Losses
+  - Total Trading Volume
+  - Realized & Unrealized P&L
+  - Biggest Win
+  - Live Position Values
+- 📈 **Interactive P&L Graph** - Dynamic chart showing profit/loss history over time
+- 💼 **Live Positions** - View active market positions
+- 📱 **Responsive Design** - Works seamlessly on desktop and mobile
+
+## Tech Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS, Recharts
+- **Backend**: Node.js, Express, TypeScript
+- **Database**: Prisma with SQLite
+- **APIs**: Polymarket API, Gamma API
 
 ## Getting Started
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+### Prerequisites
 
-2. Start development servers:
-   ```bash
-   npm run dev
-   ```
+- Node.js 16+ 
+- npm or yarn
 
-3. The application will be available at:
-   - Frontend: http://localhost:5173
-   - Backend: http://localhost:3001
-   - Health check: http://localhost:3001/health
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd poly
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up environment variables:
+```bash
+cp env.example .env
+```
+
+4. Generate Prisma client:
+```bash
+npm run db:generate
+```
+
+5. Push database schema:
+```bash
+npm run db:push
+```
+
+### Development
+
+Run the development server:
+```bash
+npm run dev
+```
+
+The app will be available at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
+
+### Production Build
+
+Build for production:
+```bash
+npm run build
+```
+
+Start the production server:
+```bash
+npm start
+```
 
 ## Project Structure
 
 ```
-src/
-├── client/          # React frontend
-│   ├── src/
-│   │   ├── components/
-│   │   │   └── Dashboard.tsx  # Main dashboard component
-│   │   ├── App.tsx
-│   │   └── main.tsx
-│   └── ...
-├── server/          # Express.js backend
-│   ├── index.ts     # Main server file
-│   └── routes/      # API routes (empty)
-└── shared/          # Shared utilities (empty)
+poly/
+├── src/
+│   ├── client/          # Frontend React application
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   └── ...
+│   │   └── index.html
+│   ├── server/          # Backend Express API
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── index.ts
+│   └── shared/          # Shared types and utilities
+├── prisma/              # Database schema
+└── ...
 ```
 
-## Ready for Implementation
+## API Endpoints
 
-You can now start building your new Polymarket dashboard from scratch!
+- `GET /api/profiles/search?q=<username>` - Search for traders
+- `GET /api/profiles/:wallet/stats` - Get trader statistics
+- `GET /api/markets` - Get market data
 
-- Add your models to `prisma/schema.prisma`
-- Create your API routes in `src/server/routes/`
-- Build your React components in `src/client/src/components/`
-- Add any shared utilities in `src/shared/`
+## Deployment
+
+### Vercel
+
+1. Push your code to GitHub
+2. Import your repository in Vercel
+3. Vercel will automatically detect the configuration
+4. Deploy!
+
+## Credits
+
+Made by **daybot** • Follow on X: [@hashvalue](https://x.com/hashvalue)
+
+## License
+
+ISC
