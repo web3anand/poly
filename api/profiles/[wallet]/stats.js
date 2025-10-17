@@ -1,3 +1,68 @@
+// Function to fetch ALL positions with pagination
+async function fetchAllPositions(baseUrl) {
+  let allPositions = [];
+  let offset = 0;
+  const limit = 1000; // Max per request
+  let hasMore = true;
+  
+  console.log(`🔄 Starting paginated fetch for: ${baseUrl}`);
+  
+  while (hasMore) {
+    try {
+      const url = `${baseUrl}&limit=${limit}&offset=${offset}`;
+      console.log(`📡 Fetching page ${Math.floor(offset/limit) + 1}: ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Polymarket-Dashboard/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`❌ API error: ${response.status} ${response.statusText}`);
+        break;
+      }
+      
+      const data = await response.json();
+      const positions = Array.isArray(data) ? data : [];
+      
+      console.log(`✅ Fetched ${positions.length} positions (offset: ${offset})`);
+      
+      if (positions.length === 0) {
+        hasMore = false;
+      } else {
+        allPositions = allPositions.concat(positions);
+        offset += limit;
+        
+        // If we got less than the limit, we've reached the end
+        if (positions.length < limit) {
+          hasMore = false;
+        }
+        
+        // Small delay between requests to be respectful to the API
+        if (hasMore) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Safety break to prevent infinite loops
+      if (offset > 50000) { // Max 50k positions
+        console.log('⚠️ Reached safety limit of 50k positions');
+        break;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error fetching page at offset ${offset}:`, error.message);
+      break;
+    }
+  }
+  
+  console.log(`🎯 Total positions fetched: ${allPositions.length}`);
+  return allPositions;
+}
+
 // Comprehensive stats API using all available Polymarket endpoints
 module.exports = async (req, res) => {
   // CORS headers
@@ -21,23 +86,13 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch ALL data in parallel using all available APIs
+    // Fetch ALL data with pagination to get complete history
     const [openPositions, closedPositions, totalValue] = await Promise.all([
-      // Open positions - includes both unrealized AND realized PnL
-      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=1000`)
-        .then(res => res.json())
-        .catch(err => {
-          console.error('Error fetching open positions:', err.message);
-          return [];
-        }),
+      // Fetch ALL open positions with pagination
+      fetchAllPositions(`https://data-api.polymarket.com/positions?user=${wallet}`),
       
-      // Closed positions - fully closed trades
-      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=1000`)
-        .then(res => res.json())
-        .catch(err => {
-          console.error('Error fetching closed positions:', err.message);
-          return [];
-        }),
+      // Fetch ALL closed positions with pagination  
+      fetchAllPositions(`https://data-api.polymarket.com/closed-positions?user=${wallet}`),
       
       // Total current position value
       fetch(`https://data-api.polymarket.com/value?user=${wallet}`)
