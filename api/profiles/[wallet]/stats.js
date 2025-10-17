@@ -117,15 +117,27 @@ function calculateStats(subgraphData, closedPositions, openPositions, totalValue
   const pnlHistory = buildPnlHistory(closedPositions, openPositions, totalPnl);
   
   // Get live position values
-  const livePositionValues = openPositions.map(pos => ({
-    market: pos.market,
-    title: pos.market_title || pos.market,
-    outcome: pos.outcome,
-    size: parseFloat(pos.size || 0),
-    value: parseFloat(pos.value || 0),
-    costBasis: parseFloat(pos.cost_basis || 0),
-    pnl: parseFloat(pos.value || 0) - parseFloat(pos.cost_basis || 0)
-  }));
+  const livePositionValues = openPositions.map(pos => {
+    const size = parseFloat(pos.size || 0);
+    const currentValue = parseFloat(pos.value || 0);
+    const costBasis = parseFloat(pos.cost_basis || 0);
+    const cashPnl = currentValue - costBasis;
+    const percentPnl = costBasis > 0 ? (cashPnl / costBasis) * 100 : 0;
+    const avgPrice = size > 0 ? costBasis / size : 0;
+
+    return {
+      market: pos.market || '',
+      title: pos.market_title || pos.market || 'Unknown Market',
+      outcome: pos.outcome || '',
+      size: size,
+      currentValue: currentValue,
+      costBasis: costBasis,
+      cashPnl: parseFloat(cashPnl.toFixed(2)),
+      percentPnl: parseFloat(percentPnl.toFixed(2)),
+      avgPrice: parseFloat(avgPrice.toFixed(4)),
+      endDate: pos.end_date || new Date().toISOString()
+    };
+  });
 
   return {
     totalPnl: parseFloat(totalPnl.toFixed(2)),
