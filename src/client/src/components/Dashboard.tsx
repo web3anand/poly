@@ -74,9 +74,9 @@ export const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1923] text-gray-300 font-sans flex flex-col">
+    <div className="min-h-screen bg-[#0a0e12] text-gray-300 font-sans flex flex-col">
       {/* Professional Header */}
-      <header className="border-b border-gray-700/50">
+      <header className="border-b border-gray-800/50 bg-[#0f1419]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -90,15 +90,15 @@ export const Dashboard: React.FC = () => {
             
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-xs text-gray-400 font-medium">Live</span>
+              <span className="text-xs text-gray-500 font-medium">Live</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow flex items-center justify-center">
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="flex-grow">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           {/* Conditional rendering for welcome vs. results */}
           {!showSearchResults ? (
             <div className="text-center">
@@ -139,15 +139,15 @@ export const Dashboard: React.FC = () => {
               </div>
               
               {selectedProfile ? (
-                // Show detailed profile card
-                <div key={selectedProfile.proxyWallet || selectedProfile.id}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-white">
+                // Show detailed profile card - Full Width
+                <div key={selectedProfile.proxyWallet || selectedProfile.id} className="w-full">
+                  <div className="flex items-center justify-between mb-4 px-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">
                       Profile Details
                     </h2>
                     <button
                       onClick={() => setSelectedProfile(null)}
-                      className="px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors duration-200 border border-gray-600/50"
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors duration-200 border border-gray-600/50"
                     >
                       Back to Results
                     </button>
@@ -174,7 +174,7 @@ export const Dashboard: React.FC = () => {
                         <div
                           key={profile.id || profile.proxyWallet}
                           onClick={() => handleProfileSelect(profile)}
-                          className="group bg-gray-800/50 rounded-xl border border-gray-700/50 p-4 hover:border-blue-500 hover:bg-gray-800 transition-all duration-200 cursor-pointer shadow-lg"
+                          className="group bg-[#0f1419] rounded-xl border border-gray-800/50 p-4 hover:border-blue-500/50 hover:bg-[#141a20] transition-all duration-200 cursor-pointer shadow-lg"
                         >
                           <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-700 rounded-lg flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
@@ -185,7 +185,7 @@ export const Dashboard: React.FC = () => {
                                 {profile.name || profile.pseudonym || 'Unknown'}
                               </h3>
                               {profile.pseudonym && profile.name !== profile.pseudonym && (
-                                <p className="text-xs text-gray-400 truncate">
+                                <p className="text-xs text-gray-500 truncate">
                                   {profile.pseudonym}
                                 </p>
                               )}

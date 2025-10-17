@@ -476,7 +476,7 @@ export class PolymarketService {
     console.log(`💰 Realized P&L: $${realizedPnl.toFixed(2)}`);
     console.log(`💰 Unrealized P&L: $${unrealizedPnl.toFixed(2)}`);
     
-    // Prioritize Subgraph data for PNL and Volume as it's most accurate
+    // Use API data directly - prioritize subgraph data if available
     if (subgraphData) {
       console.log(`✅ Using Subgraph data for PNL and Volume.`);
       // PNL and Volume from subgraph are in USDC units with 6 decimals
@@ -486,12 +486,12 @@ export class PolymarketService {
       console.log(`📊 Subgraph Total PNL: $${totalPnl.toFixed(2)}`);
       console.log(`📊 Subgraph Total Volume: $${totalVolume.toFixed(2)}`);
     } else {
-      console.log(`⚠️ Subgraph data not available, using REST API calculation.`);
+      console.log(`⚠️ Subgraph data not available, using calculated values.`);
       
       // Total P&L = Realized + Unrealized
       totalPnl = realizedPnl + unrealizedPnl;
       
-      // Volume from activity
+      // Volume from activity (past trades)
       activities.forEach(activity => {
         if (activity.type === 'TRADE') {
           totalVolume += parseFloat(activity.usdcSize || activity.size || '0');
@@ -509,6 +509,14 @@ export class PolymarketService {
         uniqueMarkets.add(activity.conditionId);
       }
     });
+    
+    // Add current open positions to bet count (by market ID)
+    openPositions.forEach(position => {
+      if (position.marketId || position.conditionId) {
+        uniqueMarkets.add(position.marketId || position.conditionId);
+      }
+    });
+    
     totalBets = uniqueMarkets.size;
 
     // Calculate Wins/Losses from closed positions (most reliable source)
