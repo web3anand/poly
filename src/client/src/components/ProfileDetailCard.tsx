@@ -71,7 +71,8 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
         console.log(`📊 Fetching metrics for wallet: ${profile.proxyWallet}`)
         
         // Call the API endpoint to get trading stats
-        const response = await fetch(`http://localhost:3001/api/profiles/${profile.proxyWallet}/stats`)
+        const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
+        const response = await fetch(`${API_BASE}/profiles/${profile.proxyWallet}/stats`)
         const result = await response.json()
         
         console.log(`✅ Metrics response:`, result)

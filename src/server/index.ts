@@ -59,6 +59,14 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// API health check for frontend
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'API is working', 
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Start server
 server.listen(PORT, async () => {
   console.log(`🚀 Polymarket Dashboard Server running on port ${PORT}`);
