@@ -1,10 +1,10 @@
+// Comprehensive stats API using all available Polymarket endpoints
 module.exports = async (req, res) => {
-  // Set CORS headers
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
 
   const { wallet } = req.query;
 
-  console.log(`📊 Stats API called for wallet: ${wallet}`);
+  console.log(`📊 Comprehensive Stats API called for wallet: ${wallet}`);
 
   if (!wallet) {
     return res.status(400).json({
@@ -21,49 +21,40 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Fetch all required data in parallel
-    const [subgraphData, closedPositions, openPositions, totalValue] = await Promise.all([
-      // Subgraph data
-      fetch('https://api.goldsky.com/api/public/project_clrvmz5nrtw9o01tu7a8s3w0z/subgraphs/polymarket-matic-mainnet/prod/gn', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `{
-            user(id: "${wallet.toLowerCase()}") {
-              id
-              totalPnl
-              totalVolume
-              winRate
-              biggestWin
-              totalBets
-            }
-          }`
-        })
-      }).then(res => res.json()).then(data => data?.data?.user).catch(() => null),
-      
-      // Closed positions (fetch more to get complete history)
-      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=500`)
+    // Fetch ALL data in parallel using all available APIs
+    const [openPositions, closedPositions, totalValue] = await Promise.all([
+      // Open positions - includes both unrealized AND realized PnL
+      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=1000`)
         .then(res => res.json())
-        .catch(() => []),
+        .catch(err => {
+          console.error('Error fetching open positions:', err.message);
+          return [];
+        }),
       
-      // Open positions (fetch more to get all current positions)
-      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=500`)
+      // Closed positions - fully closed trades
+      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=1000`)
         .then(res => res.json())
-        .catch(() => []),
+        .catch(err => {
+          console.error('Error fetching closed positions:', err.message);
+          return [];
+        }),
       
-      // Total position value
+      // Total current position value
       fetch(`https://data-api.polymarket.com/value?user=${wallet}`)
         .then(res => res.json())
-        .catch(() => ({ value: 0 }))
+        .catch(err => {
+          console.error('Error fetching total value:', err.message);
+          return [];
+        })
     ]);
 
     console.log(`✅ Data fetched for ${wallet}`);
-    console.log(`- Subgraph data:`, subgraphData ? 'Yes' : 'No');
-    console.log(`- Closed positions: ${closedPositions.length}`);
     console.log(`- Open positions: ${openPositions.length}`);
+    console.log(`- Closed positions: ${closedPositions.length}`);
+    console.log(`- Total position value: $${Array.isArray(totalValue) ? totalValue[0]?.value : totalValue?.value || 0}`);
 
     // Calculate comprehensive stats
-    const stats = calculateStats(subgraphData, closedPositions, openPositions, totalValue);
+    const stats = calculateComprehensiveStats(openPositions, closedPositions, totalValue);
 
     res.status(200).json({
       success: true,
@@ -71,7 +62,7 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error(`❌ Error fetching stats for ${wallet}:`, error.message);
-    console.error('Error details:', error.response?.data || error);
+    console.error('Error stack:', error.stack);
     
     res.status(500).json({
       success: false,
@@ -81,56 +72,86 @@ module.exports = async (req, res) => {
   }
 };
 
-function calculateStats(subgraphData, closedPositions, openPositions, totalValue) {
-  // Calculate realized PnL from closed positions
-  const closedRealizedPnl = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
+function calculateComprehensiveStats(openPositions, closedPositions, totalValue) {
+  // ==================== PNL CALCULATIONS ====================
   
-  // Calculate realized PnL from open positions (past trades on these markets)
-  const openRealizedPnl = openPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
+  // 1. Realized PnL from CLOSED positions
+  const closedRealizedPnl = closedPositions.reduce((sum, pos) => {
+    return sum + parseFloat(pos.realizedPnl || 0);
+  }, 0);
   
-  // Total realized PnL
+  // 2. Realized PnL from OPEN positions (past trades on these markets)
+  const openRealizedPnl = openPositions.reduce((sum, pos) => {
+    return sum + parseFloat(pos.realizedPnl || 0);
+  }, 0);
+  
+  // 3. Total Realized PnL (all-time closed trades)
   const realizedPnl = closedRealizedPnl + openRealizedPnl;
   
-  // Calculate unrealized PnL from open positions (current holdings)
+  // 4. Unrealized PnL (current open positions)
   const unrealizedPnl = openPositions.reduce((sum, pos) => {
     return sum + parseFloat(pos.cashPnl || 0);
   }, 0);
   
-  // Total PnL (all-time)
+  // 5. Total PnL (realized + unrealized)
   const totalPnl = realizedPnl + unrealizedPnl;
   
-  // Calculate win rate from closed positions
-  const wonPositions = closedPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
-  const winRate = closedPositions.length > 0 ? (wonPositions / closedPositions.length) * 100 : 0;
+  console.log('📊 PnL Breakdown:');
+  console.log(`   Closed Realized: $${closedRealizedPnl.toFixed(2)}`);
+  console.log(`   Open Realized: $${openRealizedPnl.toFixed(2)}`);
+  console.log(`   Total Realized: $${realizedPnl.toFixed(2)}`);
+  console.log(`   Unrealized: $${unrealizedPnl.toFixed(2)}`);
+  console.log(`   TOTAL PNL: $${totalPnl.toFixed(2)}`);
   
-  // Find biggest win
-  const biggestWin = Math.max(0, ...closedPositions.map(pos => parseFloat(pos.realizedPnl || 0)));
+  // ==================== VOLUME CALCULATIONS ====================
   
-  // Calculate total volume (total bought)
-  const closedVolume = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.totalBought || 0), 0);
-  const openVolume = openPositions.reduce((sum, pos) => sum + parseFloat(pos.totalBought || 0), 0);
+  // Total volume from closed positions
+  const closedVolume = closedPositions.reduce((sum, pos) => {
+    return sum + parseFloat(pos.totalBought || 0);
+  }, 0);
+  
+  // Total volume from open positions (includes all historical trades on these markets)
+  const openVolume = openPositions.reduce((sum, pos) => {
+    return sum + parseFloat(pos.totalBought || 0);
+  }, 0);
+  
+  // Total volume (all-time trading volume)
   const totalVolume = closedVolume + openVolume;
   
-  // Count unique markets (use conditionId as the unique identifier)
+  // ==================== WIN RATE ====================
+  
+  const wonClosed = closedPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
+  const wonOpen = openPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
+  const totalFinishedBets = closedPositions.length + openPositions.filter(pos => parseFloat(pos.realizedPnl || 0) !== 0).length;
+  
+  const winRate = totalFinishedBets > 0 ? ((wonClosed + wonOpen) / totalFinishedBets) * 100 : 0;
+  
+  // ==================== BIGGEST WIN ====================
+  
+  const biggestWinClosed = closedPositions.length > 0 ? Math.max(...closedPositions.map(pos => parseFloat(pos.realizedPnl || 0))) : 0;
+  const biggestWinOpen = openPositions.length > 0 ? Math.max(...openPositions.map(pos => parseFloat(pos.cashPnl || 0))) : 0;
+  const biggestWin = Math.max(biggestWinClosed, biggestWinOpen);
+  
+  // ==================== MARKETS TRADED ====================
+  
+  // Count unique markets using conditionId
   const uniqueMarkets = new Set([
-    ...closedPositions.map(pos => pos.conditionId || pos.eventSlug),
-    ...openPositions.map(pos => pos.conditionId || pos.eventSlug)
+    ...closedPositions.map(pos => pos.conditionId),
+    ...openPositions.map(pos => pos.conditionId)
   ]);
   
-  // Build PnL history
-  const pnlHistory = buildPnlHistory(closedPositions, openPositions, totalPnl);
+  // ==================== POSITION VALUES ====================
   
-  // Get live position values
   const livePositionValues = openPositions.map(pos => {
     const size = parseFloat(pos.size || 0);
     const currentValue = parseFloat(pos.currentValue || 0);
+    const initialValue = parseFloat(pos.initialValue || 0);
     const cashPnl = parseFloat(pos.cashPnl || 0);
     const percentPnl = parseFloat(pos.percentPnl || 0);
     const avgPrice = parseFloat(pos.avgPrice || 0);
-    const initialValue = parseFloat(pos.initialValue || 0);
 
     return {
-      market: pos.conditionId || pos.eventSlug || '',
+      market: pos.conditionId || '',
       title: pos.title || 'Unknown Market',
       outcome: pos.outcome || '',
       size: size,
@@ -142,7 +163,13 @@ function calculateStats(subgraphData, closedPositions, openPositions, totalValue
       endDate: pos.endDate || new Date().toISOString()
     };
   });
-
+  
+  // ==================== PNL HISTORY ====================
+  
+  const pnlHistory = buildPnlHistory(closedPositions, openPositions, realizedPnl, totalPnl);
+  
+  // ==================== RETURN DATA ====================
+  
   return {
     totalPnl: parseFloat(totalPnl.toFixed(2)),
     realizedPnl: parseFloat(realizedPnl.toFixed(2)),
@@ -154,20 +181,37 @@ function calculateStats(subgraphData, closedPositions, openPositions, totalValue
     totalPredictions: closedPositions.length + openPositions.length,
     totalPositionValue: parseFloat((Array.isArray(totalValue) ? totalValue[0]?.value : totalValue?.value || 0).toFixed(2)),
     pnlHistory,
-    livePositionValues
+    livePositionValues,
+    // Additional metadata
+    openPositionsCount: openPositions.length,
+    closedPositionsCount: closedPositions.length
   };
 }
 
-function buildPnlHistory(closedPositions, openPositions, finalPnl) {
+function buildPnlHistory(closedPositions, openPositions, realizedPnl, totalPnl) {
   const events = [];
   
-  // Add closed positions with their actual dates
+  // Add closed positions
   closedPositions.forEach(pos => {
-    const date = pos.endDate || pos.end_date || Date.now();
-    events.push({
-      timestamp: new Date(date).getTime(),
-      pnl: parseFloat(pos.realizedPnl || 0)
-    });
+    if (pos.realizedPnl && pos.endDate) {
+      events.push({
+        timestamp: new Date(pos.endDate).getTime(),
+        pnl: parseFloat(pos.realizedPnl || 0),
+        type: 'closed'
+      });
+    }
+  });
+  
+  // Add realized trades from open positions
+  openPositions.forEach(pos => {
+    if (pos.realizedPnl && pos.realizedPnl !== 0) {
+      // Use current date as approximation for when trades happened
+      events.push({
+        timestamp: new Date(pos.endDate || Date.now()).getTime(),
+        pnl: parseFloat(pos.realizedPnl || 0),
+        type: 'open_realized'
+      });
+    }
   });
   
   // Sort by timestamp
@@ -177,7 +221,7 @@ function buildPnlHistory(closedPositions, openPositions, finalPnl) {
   const history = [];
   let cumulativePnl = 0;
   
-  // Add starting point
+  // Add starting point (1 month before first trade)
   if (events.length > 0) {
     const firstDate = new Date(events[0].timestamp);
     firstDate.setMonth(firstDate.getMonth() - 1);
@@ -187,7 +231,7 @@ function buildPnlHistory(closedPositions, openPositions, finalPnl) {
     });
   }
   
-  // Add each event
+  // Add each event's cumulative PnL
   events.forEach(event => {
     cumulativePnl += event.pnl;
     history.push({
@@ -196,10 +240,10 @@ function buildPnlHistory(closedPositions, openPositions, finalPnl) {
     });
   });
   
-  // Add current point with final PnL (including unrealized)
+  // Add current point with total PnL (includes unrealized)
   history.push({
     timestamp: Date.now(),
-    pnl: parseFloat(finalPnl.toFixed(2))
+    pnl: parseFloat(totalPnl.toFixed(2))
   });
   
   // Interpolate for smoother graph
@@ -239,4 +283,3 @@ function interpolateHistory(history) {
   
   return interpolated;
 }
-
