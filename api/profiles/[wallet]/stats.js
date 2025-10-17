@@ -83,34 +83,32 @@ module.exports = async (req, res) => {
 
 function calculateStats(subgraphData, closedPositions, openPositions, totalValue) {
   // Calculate realized PnL from closed positions
-  const realizedPnl = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.pnl || 0), 0);
+  const realizedPnl = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
   
   // Calculate unrealized PnL from open positions
   const unrealizedPnl = openPositions.reduce((sum, pos) => {
-    const value = parseFloat(pos.value || 0);
-    const cost = parseFloat(pos.cost_basis || 0);
-    return sum + (value - cost);
+    return sum + parseFloat(pos.cashPnl || 0);
   }, 0);
   
   // Total PnL
   const totalPnl = realizedPnl + unrealizedPnl;
   
   // Calculate win rate from closed positions
-  const wonPositions = closedPositions.filter(pos => parseFloat(pos.pnl || 0) > 0).length;
+  const wonPositions = closedPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
   const winRate = closedPositions.length > 0 ? (wonPositions / closedPositions.length) * 100 : 0;
   
   // Find biggest win
-  const biggestWin = Math.max(0, ...closedPositions.map(pos => parseFloat(pos.pnl || 0)));
+  const biggestWin = Math.max(0, ...closedPositions.map(pos => parseFloat(pos.realizedPnl || 0)));
   
-  // Calculate total volume
-  const closedVolume = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.size || 0), 0);
-  const openVolume = openPositions.reduce((sum, pos) => sum + parseFloat(pos.cost_basis || 0), 0);
+  // Calculate total volume (total bought)
+  const closedVolume = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.totalBought || 0), 0);
+  const openVolume = openPositions.reduce((sum, pos) => sum + parseFloat(pos.totalBought || 0), 0);
   const totalVolume = closedVolume + openVolume;
   
-  // Count unique markets
+  // Count unique markets (use conditionId as the unique identifier)
   const uniqueMarkets = new Set([
-    ...closedPositions.map(pos => pos.market),
-    ...openPositions.map(pos => pos.market)
+    ...closedPositions.map(pos => pos.conditionId || pos.eventSlug),
+    ...openPositions.map(pos => pos.conditionId || pos.eventSlug)
   ]);
   
   // Build PnL history
@@ -119,23 +117,23 @@ function calculateStats(subgraphData, closedPositions, openPositions, totalValue
   // Get live position values
   const livePositionValues = openPositions.map(pos => {
     const size = parseFloat(pos.size || 0);
-    const currentValue = parseFloat(pos.value || 0);
-    const costBasis = parseFloat(pos.cost_basis || 0);
-    const cashPnl = currentValue - costBasis;
-    const percentPnl = costBasis > 0 ? (cashPnl / costBasis) * 100 : 0;
-    const avgPrice = size > 0 ? costBasis / size : 0;
+    const currentValue = parseFloat(pos.currentValue || 0);
+    const cashPnl = parseFloat(pos.cashPnl || 0);
+    const percentPnl = parseFloat(pos.percentPnl || 0);
+    const avgPrice = parseFloat(pos.avgPrice || 0);
+    const initialValue = parseFloat(pos.initialValue || 0);
 
     return {
-      market: pos.market || '',
-      title: pos.market_title || pos.market || 'Unknown Market',
+      market: pos.conditionId || pos.eventSlug || '',
+      title: pos.title || 'Unknown Market',
       outcome: pos.outcome || '',
       size: size,
       currentValue: currentValue,
-      costBasis: costBasis,
+      costBasis: initialValue,
       cashPnl: parseFloat(cashPnl.toFixed(2)),
       percentPnl: parseFloat(percentPnl.toFixed(2)),
       avgPrice: parseFloat(avgPrice.toFixed(4)),
-      endDate: pos.end_date || new Date().toISOString()
+      endDate: pos.endDate || new Date().toISOString()
     };
   });
 
@@ -148,7 +146,7 @@ function calculateStats(subgraphData, closedPositions, openPositions, totalValue
     biggestWin: parseFloat(biggestWin.toFixed(2)),
     totalBets: uniqueMarkets.size,
     totalPredictions: closedPositions.length + openPositions.length,
-    totalPositionValue: parseFloat((totalValue?.value || 0).toFixed(2)),
+    totalPositionValue: parseFloat((Array.isArray(totalValue) ? totalValue[0]?.value : totalValue?.value || 0).toFixed(2)),
     pnlHistory,
     livePositionValues
   };
@@ -159,10 +157,10 @@ function buildPnlHistory(closedPositions, openPositions, finalPnl) {
   
   // Add closed positions with their actual dates
   closedPositions.forEach(pos => {
-    const date = pos.end_date || pos.created_at || Date.now();
+    const date = pos.endDate || pos.end_date || Date.now();
     events.push({
       timestamp: new Date(date).getTime(),
-      pnl: parseFloat(pos.pnl || 0)
+      pnl: parseFloat(pos.realizedPnl || 0)
     });
   });
   
