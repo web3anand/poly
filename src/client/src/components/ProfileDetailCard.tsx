@@ -85,7 +85,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
             totalVolume: result.data.totalVolume || 0,
             totalBets: result.data.totalBets || 0,
             liveBets: result.data.liveBets || 0,
-            profits: result.data.profits || 0,
+            profits: result.data.totalPnl || 0,
             realizedPnl: result.data.realizedPnl || 0,
             unrealizedPnl: result.data.unrealizedPnl || 0,
             biggestWin: result.data.biggestWin || 0,
@@ -97,7 +97,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
             totalLosses: result.data.totalLosses || 0,
             pnlHistory: result.data.pnlHistory || []
           })
-          console.log(`📊 Metrics set - Total: $${result.data.profits}, Realized: $${result.data.realizedPnl}, Unrealized: $${result.data.unrealizedPnl}`)
+          console.log(`📊 Metrics set - Total: $${result.data.totalPnl}, Realized: $${result.data.realizedPnl}, Unrealized: $${result.data.unrealizedPnl}`)
           console.log(`📊 PNL History points:`, result.data.pnlHistory?.length || 0)
         } else {
           // If API doesn't have data, show zeros
@@ -472,29 +472,29 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
                             </td>
                             <td className="px-3 sm:px-4 py-2 sm:py-3 text-right">
                               <div className="text-white font-medium">
-                                {formatCurrency(position.currentValue)}
+                                {formatCurrency(position.currentValue || 0)}
                               </div>
                               <div className="text-xs text-gray-500">
-                                {position.size.toFixed(2)} tokens
+                                {(position.size || 0).toFixed(2)} tokens
                               </div>
                             </td>
                             <td className="px-3 sm:px-4 py-2 sm:py-3 text-right">
                               <div className={`font-semibold ${
-                                position.cashPnl >= 0 ? 'text-green-400' : 'text-red-400'
+                                (position.cashPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'
                               }`}>
-                                {position.cashPnl >= 0 ? '+' : ''}{formatCurrency(position.cashPnl)}
+                                {(position.cashPnl || 0) >= 0 ? '+' : ''}{formatCurrency(position.cashPnl || 0)}
                               </div>
                               <div className={`text-xs ${
-                                position.percentPnl >= 0 ? 'text-green-400' : 'text-red-400'
+                                (position.percentPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'
                               }`}>
-                                {position.percentPnl >= 0 ? '+' : ''}{position.percentPnl.toFixed(2)}%
+                                {(position.percentPnl || 0) >= 0 ? '+' : ''}{(position.percentPnl || 0).toFixed(2)}%
                               </div>
                             </td>
                             <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-white hidden sm:table-cell">
-                              ${position.avgPrice.toFixed(2)}
+                              ${(position.avgPrice || 0).toFixed(2)}
                             </td>
                             <td className="px-3 sm:px-4 py-2 sm:py-3 text-right text-white hidden sm:table-cell">
-                              ${position.curPrice.toFixed(2)}
+                              ${((position.size > 0 ? position.currentValue / position.size : 0) || 0).toFixed(2)}
                             </td>
                           </tr>
                         ))}
@@ -560,7 +560,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           {/* Win Rate */}
           <div className="text-xs">
             <div className="text-gray-500 mb-1">Win Rate</div>
-            <div className="text-green-400 font-semibold">{metrics.winRate.toFixed(1)}%</div>
+            <div className="text-green-400 font-semibold">{(metrics.winRate || 0).toFixed(1)}%</div>
           </div>
           
           {/* Biggest Win */}
