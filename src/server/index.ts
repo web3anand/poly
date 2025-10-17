@@ -6,8 +6,6 @@ import compression from 'compression';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-
 // Import routes
 import marketRoutes from './routes/markets';
 import profileRoutes from './routes/profiles';
@@ -25,7 +23,6 @@ const io = new SocketIOServer(server, {
 });
 
 const PORT = process.env.PORT || 3001;
-const prisma = new PrismaClient();
 
 // Middleware
 app.use(helmet());
@@ -40,23 +37,15 @@ app.use('/api/markets', marketRoutes);
 app.use('/api/profiles', profileRoutes);
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    const dbStatus = await prisma.$queryRaw`SELECT 1`;
-    res.json({ 
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      services: {
-        database: 'connected',
-        websocket: 'active'
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      status: 'unhealthy', 
-      error: 'Database connection failed' 
-    });
-  }
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    services: {
+      api: 'active',
+      websocket: 'active'
+    }
+  });
 });
 
 // API health check for frontend
