@@ -4,11 +4,20 @@ import { ProfileDetailCard } from './ProfileDetailCard'
 
 const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
 
+// Debug logging
+console.log('Environment:', process.env.NODE_ENV)
+console.log('API_BASE:', API_BASE)
+
 export const Dashboard: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [selectedProfile, setSelectedProfile] = useState<any>(null)
+
+  // Debug: Test if component is rendering
+  console.log('Dashboard component rendering...')
+  console.log('Environment:', process.env.NODE_ENV)
+  console.log('API_BASE:', API_BASE)
 
   // Debug: Track when selectedProfile changes
   useEffect(() => {
@@ -75,6 +84,11 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0e12] text-gray-300 font-sans flex flex-col">
+      {/* Debug Test */}
+      <div className="bg-red-500 text-white p-4 text-center">
+        DEBUG: Dashboard is rendering! Environment: {process.env.NODE_ENV}
+      </div>
+      
       {/* Professional Header */}
       <header className="border-b border-gray-800/50 bg-[#0f1419]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
