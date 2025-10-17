@@ -64,12 +64,11 @@ server.listen(PORT, async () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
+process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
-  await prisma.$disconnect();
   server.close(() => {
     console.log('Process terminated');
   });
 });
 
-export { app, server, io, prisma };
+export { app, server, io };
