@@ -10,16 +10,23 @@ module.exports = (req, res) => {
     return;
   }
 
-  // Only handle GET requests
-  if (req.method !== 'GET') {
-    res.status(405).json({ error: 'Method not allowed' });
+  // Get the path from the URL
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const path = url.pathname;
+
+  console.log('🔍 API request received:', path);
+
+  // Handle different endpoints
+  if (path === '/api/health') {
+    res.json({ 
+      status: 'API is working', 
+      timestamp: new Date().toISOString()
+    });
     return;
   }
 
-  try {
-    console.log('🔍 Search endpoint hit');
-    
-    const { q: query, limit = 20 } = req.query;
+  if (path === '/api/profiles/search') {
+    const { q: query, limit = 20 } = url.searchParams;
 
     console.log(`🔍 Search request received: query="${query}", limit=${limit}`);
 
@@ -30,7 +37,7 @@ module.exports = (req, res) => {
       });
     }
 
-    // For now, return mock data to test if the endpoint works
+    // Return mock data for testing
     const mockProfiles = [
       {
         id: '1',
@@ -50,13 +57,12 @@ module.exports = (req, res) => {
       count: mockProfiles.length,
       query
     });
-
-  } catch (error) {
-    console.error('❌ Error searching profiles:', error);
-    
-    res.status(500).json({ 
-      error: 'Failed to search profiles',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
+    return;
   }
+
+  // Default response for unknown endpoints
+  res.status(404).json({ 
+    error: 'Endpoint not found',
+    path: path
+  });
 };
