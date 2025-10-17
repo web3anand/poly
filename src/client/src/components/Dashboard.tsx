@@ -84,11 +84,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0e12] text-gray-300 font-sans flex flex-col">
-      {/* Debug Test */}
-      <div className="bg-red-500 text-white p-4 text-center">
-        DEBUG: Dashboard is rendering! Environment: {process.env.NODE_ENV}
-      </div>
-      
       {/* Professional Header */}
       <header className="border-b border-gray-800/50 bg-[#0f1419]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
