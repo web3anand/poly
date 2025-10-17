@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,32 +24,36 @@ module.exports = async (req, res) => {
     // Fetch all required data in parallel
     const [subgraphData, closedPositions, openPositions, totalValue] = await Promise.all([
       // Subgraph data
-      axios.post('https://api.goldsky.com/api/public/project_clrvmz5nrtw9o01tu7a8s3w0z/subgraphs/polymarket-matic-mainnet/prod/gn', {
-        query: `{
-          user(id: "${wallet.toLowerCase()}") {
-            id
-            totalPnl
-            totalVolume
-            winRate
-            biggestWin
-            totalBets
-          }
-        }`
-      }).then(res => res.data?.data?.user).catch(() => null),
+      fetch('https://api.goldsky.com/api/public/project_clrvmz5nrtw9o01tu7a8s3w0z/subgraphs/polymarket-matic-mainnet/prod/gn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `{
+            user(id: "${wallet.toLowerCase()}") {
+              id
+              totalPnl
+              totalVolume
+              winRate
+              biggestWin
+              totalBets
+            }
+          }`
+        })
+      }).then(res => res.json()).then(data => data?.data?.user).catch(() => null),
       
       // Closed positions
-      axios.get(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=100`)
-        .then(res => res.data)
+      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=100`)
+        .then(res => res.json())
         .catch(() => []),
       
       // Open positions
-      axios.get(`https://data-api.polymarket.com/positions?user=${wallet}&limit=100`)
-        .then(res => res.data)
+      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=100`)
+        .then(res => res.json())
         .catch(() => []),
       
       // Total position value
-      axios.get(`https://data-api.polymarket.com/value?user=${wallet}`)
-        .then(res => res.data)
+      fetch(`https://data-api.polymarket.com/value?user=${wallet}`)
+        .then(res => res.json())
         .catch(() => ({ value: 0 }))
     ]);
 

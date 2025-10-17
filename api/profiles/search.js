@@ -1,5 +1,3 @@
-const axios = require('axios');
-
 module.exports = async (req, res) => {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,22 +26,30 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Call Polymarket API to search for users
-    const response = await axios.get('https://gamma-api.polymarket.com/users', {
-      params: {
-        search: query.trim(),
-        limit: parseInt(limit)
-      },
+    // Call Polymarket API to search for users using fetch
+    const url = new URL('https://gamma-api.polymarket.com/users');
+    url.searchParams.append('search', query.trim());
+    url.searchParams.append('limit', limit);
+
+    console.log(`🔍 Calling: ${url.toString()}`);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
       headers: {
-        'Accept': 'application/json'
-      },
-      timeout: 10000
+        'Accept': 'application/json',
+        'User-Agent': 'PolymarketDashboard/1.0'
+      }
     });
 
-    console.log(`✅ Polymarket API response: ${response.data?.length || 0} profiles found`);
+    if (!response.ok) {
+      throw new Error(`Polymarket API returned ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`✅ Polymarket API response: ${data?.length || 0} profiles found`);
 
     // Transform the data to match our frontend format
-    const profiles = (response.data || []).map(user => ({
+    const profiles = (data || []).map(user => ({
       id: user.id || user.username,
       name: user.name || user.username,
       username: user.username,
@@ -61,7 +67,7 @@ module.exports = async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error searching users:', error.message);
-    console.error('Error details:', error.response?.data || error);
+    console.error('Error stack:', error.stack);
     
     res.status(500).json({
       success: false,
