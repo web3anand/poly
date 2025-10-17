@@ -26,10 +26,12 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Call Polymarket API to search for users using fetch
-    const url = new URL('https://gamma-api.polymarket.com/users');
-    url.searchParams.append('search', query.trim());
-    url.searchParams.append('limit', limit);
+    // Use Polymarket's public-search endpoint
+    const url = new URL('https://gamma-api.polymarket.com/public-search');
+    url.searchParams.append('q', query.trim());
+    url.searchParams.append('search_profiles', 'true');
+    url.searchParams.append('search_tags', 'false');
+    url.searchParams.append('limit_per_type', limit);
 
     console.log(`🔍 Calling: ${url.toString()}`);
 
@@ -37,32 +39,35 @@ module.exports = async (req, res) => {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'PolymarketDashboard/1.0'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error: ${response.status} - ${errorText}`);
       throw new Error(`Polymarket API returned ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log(`✅ Polymarket API response: ${data?.length || 0} profiles found`);
+    const profiles = data.profiles || [];
+    console.log(`✅ Polymarket API response: ${profiles.length} profiles found`);
 
     // Transform the data to match our frontend format
-    const profiles = (data || []).map(user => ({
-      id: user.id || user.username,
-      name: user.name || user.username,
-      username: user.username,
-      display_name: user.display_name || user.name || user.username,
-      profileImage: user.profile_image || user.profileImage,
-      proxyWallet: user.proxy_wallet || user.proxyWallet,
+    const transformedProfiles = profiles.map(user => ({
+      id: user.proxyWallet || user.name,
+      name: user.name,
+      username: user.name,
+      display_name: user.displayUsernamePublic ? user.name : user.pseudonym,
+      profileImage: user.profileImage || '',
+      proxyWallet: user.proxyWallet,
       bio: user.bio || ''
     }));
 
     res.status(200).json({
       success: true,
-      data: profiles,
-      count: profiles.length,
+      data: transformedProfiles,
+      count: transformedProfiles.length,
       query
     });
   } catch (error) {
