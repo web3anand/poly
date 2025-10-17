@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { SearchBar } from './SearchBar'
 import { ProfileDetailCard } from './ProfileDetailCard'
 
-const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
+const API_BASE = '/api'
 
 // Debug logging
 console.log('Environment:', process.env.NODE_ENV)

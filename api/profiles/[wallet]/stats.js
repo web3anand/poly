@@ -96,12 +96,21 @@ function calculateComprehensiveStats(openPositions, closedPositions, totalValue)
   // 5. Total PnL (realized + unrealized)
   const totalPnl = realizedPnl + unrealizedPnl;
   
+  console.log('🔍 Debug totalPnl calculation:');
+  console.log(`   realizedPnl: ${realizedPnl} (type: ${typeof realizedPnl})`);
+  console.log(`   unrealizedPnl: ${unrealizedPnl} (type: ${typeof unrealizedPnl})`);
+  console.log(`   totalPnl before parseFloat: ${totalPnl} (type: ${typeof totalPnl})`);
+  console.log(`   isNaN(totalPnl): ${isNaN(totalPnl)}`);
+  console.log(`   totalPnl === undefined: ${totalPnl === undefined}`);
+  
   console.log('📊 PnL Breakdown:');
   console.log(`   Closed Realized: $${closedRealizedPnl.toFixed(2)}`);
   console.log(`   Open Realized: $${openRealizedPnl.toFixed(2)}`);
   console.log(`   Total Realized: $${realizedPnl.toFixed(2)}`);
   console.log(`   Unrealized: $${unrealizedPnl.toFixed(2)}`);
   console.log(`   TOTAL PNL: $${totalPnl.toFixed(2)}`);
+  console.log(`   totalPnl type: ${typeof totalPnl}`);
+  console.log(`   totalPnl value: ${totalPnl}`);
   
   // ==================== VOLUME CALCULATIONS ====================
   
@@ -120,11 +129,23 @@ function calculateComprehensiveStats(openPositions, closedPositions, totalValue)
   
   // ==================== WIN RATE ====================
   
+  // For closed positions, use realizedPnl
   const wonClosed = closedPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
-  const wonOpen = openPositions.filter(pos => parseFloat(pos.realizedPnl || 0) > 0).length;
-  const totalFinishedBets = closedPositions.length + openPositions.filter(pos => parseFloat(pos.realizedPnl || 0) !== 0).length;
+  
+  // For open positions, use cashPnl (unrealized PnL) to determine if currently winning
+  const wonOpen = openPositions.filter(pos => parseFloat(pos.cashPnl || 0) > 0).length;
+  
+  // Total finished bets = all closed positions + open positions that have any PnL (positive or negative)
+  const totalFinishedBets = closedPositions.length + openPositions.filter(pos => parseFloat(pos.cashPnl || 0) !== 0).length;
   
   const winRate = totalFinishedBets > 0 ? ((wonClosed + wonOpen) / totalFinishedBets) * 100 : 0;
+  
+  console.log('🎯 Win Rate Calculation:');
+  console.log(`   wonClosed: ${wonClosed} (closed positions with realizedPnl > 0)`);
+  console.log(`   wonOpen: ${wonOpen} (open positions with cashPnl > 0)`);
+  console.log(`   totalWins: ${wonClosed + wonOpen}`);
+  console.log(`   totalFinishedBets: ${totalFinishedBets}`);
+  console.log(`   winRate: ${winRate.toFixed(2)}%`);
   
   // ==================== BIGGEST WIN ====================
   
@@ -182,6 +203,10 @@ function calculateComprehensiveStats(openPositions, closedPositions, totalValue)
     totalPositionValue: parseFloat((Array.isArray(totalValue) ? totalValue[0]?.value : totalValue?.value || 0).toFixed(2)),
     pnlHistory,
     livePositionValues,
+    // Frontend expects these field names
+    liveBets: openPositions.length,  // Current open positions count
+    totalWins: wonClosed + wonOpen,  // Total winning positions (closed + open)
+    totalLosses: totalFinishedBets - (wonClosed + wonOpen),  // Total losing positions
     // Additional metadata
     openPositionsCount: openPositions.length,
     closedPositionsCount: closedPositions.length

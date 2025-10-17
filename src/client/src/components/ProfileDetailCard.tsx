@@ -71,7 +71,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
         console.log(`📊 Fetching metrics for wallet: ${profile.proxyWallet}`)
         
         // Call the API endpoint to get trading stats
-        const API_BASE = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3001/api'
+        const API_BASE = '/api'
         const response = await fetch(`${API_BASE}/profiles/${profile.proxyWallet}/stats`)
         const result = await response.json()
         
@@ -84,7 +84,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           setMetrics({
             totalVolume: result.data.totalVolume || 0,
             totalBets: result.data.totalBets || 0,
-            liveBets: result.data.liveBets || 0,
+            liveBets: result.data.openPositionsCount || result.data.liveBets || 0,  // Use openPositionsCount if available
             profits: result.data.totalPnl || 0,
             realizedPnl: result.data.realizedPnl || 0,
             unrealizedPnl: result.data.unrealizedPnl || 0,
@@ -93,7 +93,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
             totalPositionValue: result.data.totalPositionValue || 0,
             livePositionValues: result.data.livePositionValues || [],
             winRate: result.data.winRate || 0,
-            totalWins: result.data.totalWins || 0,
+            totalWins: result.data.totalWins || 0,  // This might be 0 if not provided by API
             totalLosses: result.data.totalLosses || 0,
             pnlHistory: result.data.pnlHistory || []
           })
@@ -510,21 +510,21 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
 
       {/* Bottom Stats Bar - Perfectly Aligned */}
       <div className="px-4 sm:px-6 py-4 border-t border-gray-700/50 bg-[#0f1419]">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-4 sm:gap-6">
-          {/* Positions */}
-          <div className="text-xs">
-            <div className="text-gray-500 mb-1">Positions</div>
-            <div className="text-white font-semibold">{metrics.liveBets} <span className="text-gray-500">({metrics.totalWins} win)</span></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-2 sm:gap-4">
+          {/* Total Bets */}
+          <div className="text-xs text-center">
+            <div className="text-gray-500 mb-1">Total Bets</div>
+            <div className="text-white font-semibold">{metrics.totalPredictions || 0} <span className="text-gray-500">({metrics.totalWins || 0} win)</span></div>
           </div>
           
-          {/* Total */}
-          <div className="text-xs">
-            <div className="text-gray-500 mb-1">Total</div>
+          {/* Total Position Value */}
+          <div className="text-xs text-center">
+            <div className="text-gray-500 mb-1">Total Position Value</div>
             <div className="text-white font-semibold">{formatCurrency(metrics.totalPositionValue || 0)}</div>
           </div>
           
           {/* Total PnL */}
-          <div className="text-xs">
+          <div className="text-xs text-center">
             <div className="text-gray-500 mb-1">Total PnL</div>
             <div className={`font-semibold ${
               ((metrics.realizedPnl || 0) + (metrics.unrealizedPnl || 0)) >= 0 ? 'text-green-400' : 'text-red-400'
@@ -534,7 +534,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           </div>
           
           {/* Realized */}
-          <div className="text-xs">
+          <div className="text-xs text-center">
             <div className="text-gray-500 mb-1">Realized</div>
             <div className={`font-semibold ${(metrics.realizedPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {formatCurrency(metrics.realizedPnl || 0)}
@@ -542,7 +542,7 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           </div>
           
           {/* Unrealized */}
-          <div className="text-xs">
+          <div className="text-xs text-center">
             <div className="text-gray-500 mb-1">Unrealized</div>
             <div className={`font-semibold ${
               (metrics.unrealizedPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'
@@ -552,21 +552,27 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           </div>
           
           {/* Volume */}
-          <div className="text-xs">
+          <div className="text-xs text-center">
             <div className="text-gray-500 mb-1">Volume</div>
             <div className="text-white font-semibold">{formatCurrency(metrics.totalVolume)}</div>
           </div>
           
           {/* Win Rate */}
-          <div className="text-xs">
+          <div className="text-xs text-center">
             <div className="text-gray-500 mb-1">Win Rate</div>
             <div className="text-green-400 font-semibold">{(metrics.winRate || 0).toFixed(1)}%</div>
           </div>
           
           {/* Biggest Win */}
-          <div className="text-xs col-span-2 sm:col-span-1">
+          <div className="text-xs text-center col-span-2 sm:col-span-1">
             <div className="text-gray-500 mb-1">Biggest Win</div>
             <div className="text-green-400 font-semibold">+{formatCurrency(metrics.biggestWin || 0)}</div>
+          </div>
+          
+          {/* Open Positions */}
+          <div className="text-xs text-center">
+            <div className="text-gray-500 mb-1">Open</div>
+            <div className="text-white font-semibold">{metrics.liveBets || 0}</div>
           </div>
         </div>
       </div>
