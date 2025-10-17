@@ -41,13 +41,13 @@ module.exports = async (req, res) => {
         })
       }).then(res => res.json()).then(data => data?.data?.user).catch(() => null),
       
-      // Closed positions
-      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=100`)
+      // Closed positions (fetch more to get complete history)
+      fetch(`https://data-api.polymarket.com/closed-positions?user=${wallet}&limit=500`)
         .then(res => res.json())
         .catch(() => []),
       
-      // Open positions
-      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=100`)
+      // Open positions (fetch more to get all current positions)
+      fetch(`https://data-api.polymarket.com/positions?user=${wallet}&limit=500`)
         .then(res => res.json())
         .catch(() => []),
       
@@ -83,14 +83,20 @@ module.exports = async (req, res) => {
 
 function calculateStats(subgraphData, closedPositions, openPositions, totalValue) {
   // Calculate realized PnL from closed positions
-  const realizedPnl = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
+  const closedRealizedPnl = closedPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
   
-  // Calculate unrealized PnL from open positions
+  // Calculate realized PnL from open positions (past trades on these markets)
+  const openRealizedPnl = openPositions.reduce((sum, pos) => sum + parseFloat(pos.realizedPnl || 0), 0);
+  
+  // Total realized PnL
+  const realizedPnl = closedRealizedPnl + openRealizedPnl;
+  
+  // Calculate unrealized PnL from open positions (current holdings)
   const unrealizedPnl = openPositions.reduce((sum, pos) => {
     return sum + parseFloat(pos.cashPnl || 0);
   }, 0);
   
-  // Total PnL
+  // Total PnL (all-time)
   const totalPnl = realizedPnl + unrealizedPnl;
   
   // Calculate win rate from closed positions
