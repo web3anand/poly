@@ -1,14 +1,21 @@
-const express = require('express');
-const cors = require('cors');
+module.exports = (req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-const app = express();
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+  // Only handle GET requests
+  if (req.method !== 'GET') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
 
-// Simple search endpoint
-app.get('/', async (req, res) => {
   try {
     console.log('🔍 Search endpoint hit');
     
@@ -52,6 +59,4 @@ app.get('/', async (req, res) => {
       details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
-});
-
-module.exports = app;
+};
