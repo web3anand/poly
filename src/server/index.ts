@@ -46,6 +46,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Simple test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Test endpoint working',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Start server (only in development)
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {

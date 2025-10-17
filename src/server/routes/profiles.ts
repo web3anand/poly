@@ -7,6 +7,8 @@ const polymarketService = new PolymarketService();
 // Search profiles by username only
 router.get('/search', async (req, res) => {
   try {
+    console.log('🔍 Search endpoint hit');
+    
     const { q: query, limit = 20 } = req.query;
 
     console.log(`🔍 Search request received: query="${query}", limit=${limit}`);
