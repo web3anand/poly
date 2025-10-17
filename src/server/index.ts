@@ -3,8 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 import dotenv from 'dotenv';
 // Import routes
 import marketRoutes from './routes/markets';
@@ -14,14 +12,6 @@ import profileRoutes from './routes/profiles';
 dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const io = new SocketIOServer(server, {
-  cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
-});
-
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -56,19 +46,18 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Start server
-server.listen(PORT, async () => {
-  console.log(`🚀 Polymarket Dashboard Server running on port ${PORT}`);
-  console.log(`📊 WebSocket server active`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-});
+// Start server (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Polymarket Dashboard Server running on port ${PORT}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('Process terminated');
-  });
+  console.log('Process terminated');
 });
 
-export { app, server, io };
+export { app };
