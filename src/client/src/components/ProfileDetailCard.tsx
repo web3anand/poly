@@ -512,20 +512,20 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
       <div className="px-4 sm:px-6 py-4 border-t border-gray-700/50 bg-[#0f1419]">
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-2 sm:gap-4">
           {/* Total Bets */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Total Bets</div>
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Total Bets</div>
             <div className="text-white font-semibold">{metrics.totalPredictions || 0} <span className="text-gray-500">({metrics.totalWins || 0} win)</span></div>
           </div>
           
-          {/* Total Position Value */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Total Position Value</div>
+          {/* Portfolio Value */}
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Portfolio Value</div>
             <div className="text-white font-semibold">{formatCurrency(metrics.totalPositionValue || 0)}</div>
           </div>
           
-          {/* Total PnL */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Total PnL</div>
+          {/* Total Profit/Loss */}
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Total P&L</div>
             <div className={`font-semibold ${
               ((metrics.realizedPnl || 0) + (metrics.unrealizedPnl || 0)) >= 0 ? 'text-green-400' : 'text-red-400'
             }`}>
@@ -533,17 +533,17 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
             </div>
           </div>
           
-          {/* Realized */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Realized</div>
+          {/* Closed P&L */}
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Closed P&L</div>
             <div className={`font-semibold ${(metrics.realizedPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {formatCurrency(metrics.realizedPnl || 0)}
             </div>
           </div>
           
-          {/* Unrealized */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Unrealized</div>
+          {/* Open P&L */}
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Open P&L</div>
             <div className={`font-semibold ${
               (metrics.unrealizedPnl || 0) >= 0 ? 'text-green-400' : 'text-red-400'
             }`}>
@@ -552,26 +552,26 @@ export const ProfileDetailCard: React.FC<ProfileDetailCardProps> = ({ profile })
           </div>
           
           {/* Volume */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Volume</div>
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Volume</div>
             <div className="text-white font-semibold">{formatCurrency(metrics.totalVolume)}</div>
           </div>
           
           {/* Win Rate */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Win Rate</div>
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Win Rate</div>
             <div className="text-green-400 font-semibold">{(metrics.winRate || 0).toFixed(1)}%</div>
           </div>
           
           {/* Biggest Win */}
-          <div className="text-xs text-center col-span-2 sm:col-span-1">
-            <div className="text-gray-500 mb-1">Biggest Win</div>
+          <div className="text-sm text-center col-span-2 sm:col-span-1">
+            <div className="text-gray-500 mb-1 text-xs">Biggest Win</div>
             <div className="text-green-400 font-semibold">+{formatCurrency(metrics.biggestWin || 0)}</div>
           </div>
           
           {/* Open Positions */}
-          <div className="text-xs text-center">
-            <div className="text-gray-500 mb-1">Open</div>
+          <div className="text-sm text-center">
+            <div className="text-gray-500 mb-1 text-xs">Open</div>
             <div className="text-white font-semibold">{metrics.liveBets || 0}</div>
           </div>
         </div>
