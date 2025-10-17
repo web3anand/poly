@@ -7,25 +7,9 @@
       "config": {
         "distDir": "dist/client"
       }
-    },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
     }
   ],
   "routes": [
-    {
-      "src": "/api/health",
-      "dest": "/api/health.js"
-    },
-    {
-      "src": "/api/profiles/search",
-      "dest": "/api/profiles/search.js"
-    },
-    {
-      "src": "/api/profiles/([^/]+)/stats",
-      "dest": "/api/profiles/$1/stats.js"
-    },
     {
       "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
       "dest": "/$1"
