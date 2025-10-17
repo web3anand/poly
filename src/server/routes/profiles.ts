@@ -9,14 +9,21 @@ router.get('/search', async (req, res) => {
   try {
     const { q: query, limit = 20 } = req.query;
 
+    console.log(`🔍 Search request received: query="${query}", limit=${limit}`);
+
     if (!query || typeof query !== 'string') {
+      console.log('❌ Invalid query parameter');
       return res.status(400).json({ 
         error: 'Query parameter is required' 
       });
     }
 
+    console.log(`🔍 Calling searchUsers with query: "${query}"`);
+    
     // Use the dedicated searchUsers method that only searches by username
     const profiles = await polymarketService.searchUsers(query, parseInt(limit as string));
+
+    console.log(`✅ Search completed: found ${profiles.length} profiles`);
 
     res.json({
       success: true,
@@ -26,10 +33,13 @@ router.get('/search', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error searching profiles:', error);
+    console.error('❌ Error searching profiles:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     res.status(500).json({ 
       error: 'Failed to search profiles',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
     });
   }
 });

@@ -989,7 +989,13 @@ export class PolymarketService {
         }
       });
       
-      console.log(`📊 Search API response:`, response.data);
+      console.log(`📊 Search API response status: ${response.status}`);
+      console.log(`📊 Search API response data:`, response.data);
+      
+      if (!response.data) {
+        console.log('❌ No data in response');
+        return [];
+      }
       
       const profiles = response.data.profiles || [];
       console.log(`📊 Found ${profiles.length} profiles from search API`);
@@ -1009,7 +1015,16 @@ export class PolymarketService {
       return filteredProfiles;
     } catch (error) {
       console.error('❌ Error searching users via API:', error);
-        return [];
+      if (error instanceof Error) {
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error stack:', error.stack);
+      }
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.error('❌ Axios error response status:', axiosError.response?.status);
+        console.error('❌ Axios error response data:', axiosError.response?.data);
+      }
+      return [];
     }
   }
 
