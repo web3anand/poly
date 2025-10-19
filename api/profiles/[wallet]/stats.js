@@ -1,12 +1,12 @@
-        // Function to fetch ALL positions with MAXIMUM parallel batch execution
-        // Rate limit: 200 req/10s (Data API General) but can burst higher
+        // Function to fetch ALL positions with optimized parallel batch execution
+        // Balanced for Vercel's 10s timeout limit while maximizing data
         async function fetchAllPositions(baseUrl) {
-          console.log(`🚀 Starting MAXIMUM parallel fetch: ${baseUrl}`);
+          console.log(`🚀 Starting optimized parallel fetch: ${baseUrl}`);
           
-          // OPTIMAL CONFIGURATION: 200 batches x 50 size = 10,000 position coverage
-          // Testing showed this gets 2,500 closed positions and EXCEEDS $650K target!
-          const batchSize = 50; // Optimal batch size for maximum coverage
-          const maxParallel = 200; // 200 parallel requests for MAXIMUM data (181 req/s)
+          // VERCEL-OPTIMIZED: 50 batches x 50 size = 2,500 position coverage
+          // This avoids timeout while still getting 1,250+ closed positions
+          const batchSize = 50; // Optimal batch size
+          const maxParallel = 50; // 50 parallel requests (fast but safe for Vercel)
           
           const batchPromises = [];
           for (let i = 0; i < maxParallel; i++) {
